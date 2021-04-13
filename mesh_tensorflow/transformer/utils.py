@@ -170,7 +170,9 @@ def build_model(model_type="bitransformer",
                 input_vocab_size=gin.REQUIRED,
                 output_vocab_size=gin.REQUIRED,
                 layout_rules=None,
-                mesh_shape=None):
+                mesh_shape=None,
+                input_vocabulary=None,
+                target_vocabulary=None):
   """Build a transformer model.
 
   Currently, four types of models are supported:
@@ -212,15 +214,21 @@ def build_model(model_type="bitransformer",
     output_vocab_size: an integer
     layout_rules: optional, input to mtf.convert_to_layout_rules
     mesh_shape: optional, an input to mtf.convert_to_shape()
+    input_vocabulary: optional, a vocubalaries.Vocabulary
+    target_vocabulary: optional, a vocubalaries.Vocabulary
+
   Returns:
     a Unitransformer or Bitransformer
   """
   if model_type == "bitransformer":
-    return transformer.make_bitransformer(
+    ret = transformer.make_bitransformer(
         input_vocab_size=input_vocab_size,
         output_vocab_size=output_vocab_size,
         mesh_shape=mesh_shape,
         layout=layout_rules)
+    ret.encoder.vocabulary = input_vocabulary
+    ret.decoder.vocabulary = target_vocabulary
+    return ret
   elif model_type == "bi_student_teacher":
     return transformer.make_bi_student_teacher(
         input_vocab_size=input_vocab_size,
@@ -234,7 +242,8 @@ def build_model(model_type="bitransformer",
         input_vocab_size=input_vocab_size,
         output_vocab_size=output_vocab_size,
         mesh_shape=mesh_shape,
-        layout=layout_rules)
+        layout=layout_rules,
+        vocabulary=input_vocabulary)
   else:
     raise ValueError("unknown model_type")
 
@@ -1928,7 +1937,9 @@ def get_estimator(model_type, vocabulary, mesh_shape,
       input_vocab_size=inputs_vocabulary(vocabulary).vocab_size,
       output_vocab_size=targets_vocabulary(vocabulary).vocab_size,
       layout_rules=layout_rules,
-      mesh_shape=mesh_shape)
+      mesh_shape=mesh_shape,
+      input_vocabulary=inputs_vocabulary(vocabulary),
+      target_vocabulary=targets_vocabulary(vocabulary))
 
   model_fn = tpu_estimator_model_fn(
       model_type=model_type,

@@ -721,7 +721,8 @@ class Unitransformer(object):
                input_full_attention=False,
                loss_on_targets_only=False,
                loss_denominator=None,
-               token_dropout_rate=0.0):
+               token_dropout_rate=0.0,
+               vocabulary=None):
     """Create a Unitransformer.
 
     Args:
@@ -766,6 +767,7 @@ class Unitransformer(object):
         same denominator as was used for the pretraining.  This complication
         might be avoided by always using loss_denominator = 1.0.
       token_dropout_rate: an optional floating point value
+      vocabulary: an optional vocabularies.Vocabulary
     """
     self.layer_stack = layer_stack
     self.model_dim = mtf.Dimension("d_model", d_model)
@@ -806,6 +808,7 @@ class Unitransformer(object):
       raise ValueError(
           "input_full_attention only makes sense with autoregressive")
     self.token_dropout_rate = token_dropout_rate
+    self.vocabulary = vocabulary
 
   @property
   def fully_autoregressive(self):
